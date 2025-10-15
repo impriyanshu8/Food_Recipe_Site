@@ -1,6 +1,12 @@
 from django.shortcuts import render, redirect
 from .models import *
 from django.http import HttpResponse
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from django.shortcuts import get_object_or_404
+from .models import Recipe
+import os
+from django.conf import settings
 
 # Create your views here.
 def recipe(request):
@@ -57,3 +63,35 @@ def delete_recipe(request, id):
     queryset = Recipe.objects.get(id = id)
     queryset.delete()
     return redirect('/recipe/')
+
+def download_recipe_pdf(request, id):
+    recipe = get_object_or_404(Recipe, id=id)
+
+    # Create the HTTP response with PDF header
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{recipe.recipe_name}.pdf"'
+
+    # Create PDF
+    p = canvas.Canvas(response, pagesize=letter)
+    width, height = letter
+
+    # Add content
+    p.setFont("Helvetica-Bold", 20)
+    p.drawString(50, height - 50, recipe.recipe_name)
+
+    p.setFont("Helvetica", 12)
+    text_object = p.beginText(50, height - 100)
+    for line in recipe.recipe_description.split('\n'):
+        text_object.textLine(line)
+    p.drawText(text_object)
+
+    # Add Image (if available)
+    if recipe.recipe_image:
+        image_path = os.path.join(settings.MEDIA_ROOT, str(recipe.recipe_image))
+        if os.path.exists(image_path):
+            p.drawImage(image_path, 50, 200, width=200, preserveAspectRatio=True)
+
+    p.showPage()
+    p.save()
+
+    return response

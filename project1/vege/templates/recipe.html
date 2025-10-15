@@ -57,6 +57,10 @@
       <td>
         <a href="/delete_recipe{{recipe.id}}" class="btn btn-danger">Delete</button>
         <a href="/update_recipe{{recipe.id}}" class="btn btn-success">Update</a>
+        <a href="{% url 'download_recipe' recipe.id %}" class="btn btn-outline-dark btn-sm">
+  <i class="bi bi-file-earmark-arrow-down"></i> Download PDF
+</a>
+
       </td>
     </tr>
     {% endfor %}
